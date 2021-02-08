@@ -307,6 +307,37 @@ def accuracy_computer(R, Y):
     acc = np.count_nonzero(Y_tilde == Y)/m
     return acc
 
+def empirical_gap_pairing(R, R_s):
+    R = np.array(R)
+    R_s = np.array(R_s)
+    n = np.size(R, axis = 0)
+    n_s = np.size(R_s, axis = 0)
+    n_3 = int(n/3)
+    n_s_2 = int(n_s/2)
+    R_A = R[0:n_3]
+    R_B = R[n_3:n_3*2]
+    R_C = R[n_3*2:n]
+    R_s_B = R_s[0:n_s_2]
+    R_s_C = R_s[n_s_2:n_s]
+    
+    U_AB, U_sB = mechanism_pairing_4(R_A, R_B, R_s_B)
+    t_B = np.max(U_sB, axis = 0)
+    e_AB = np.zeros((n_3, 4))
+    e_AB[U_AB > t_B] = 1
+    
+    U_AC, U_sC = mechanism_pairing_4(R_A, R_C, R_s_C)
+    t_C = np.max(U_sC, axis = 0)
+    e_AC = np.zeros((n_3, 4))
+    e_AC[U_AC > t_C] = 1
+    
+    a = np.zeros(4)
+    for j in range(4):
+        n_s_hat = np.size(np.intersect1d(np.where(e_AB[:,j] == 0), np.where(e_AC[:,j] == 0)))
+        n_s_B = np.size(np.where(e_AB[:,j] == 0))
+        n_s_C = np.size(np.where(e_AC[:,j] == 0))
+        p_i = (n_s_B+n_s_C-2*n_s_hat)/(2*n_3)
+        a[j] = 1/(1-p_i)
+    return a
 
 #%%
 """
@@ -338,6 +369,7 @@ Gap between virtual_shirker step and opt step
 """
 
 n = 50
+n_s = int(n/4)
 m = 100
 M = [20, 30, 40, 50, 80]
 Effort = np.arange(0, 1.01, 0.01)
