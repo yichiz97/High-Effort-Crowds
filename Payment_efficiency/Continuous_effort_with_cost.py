@@ -87,9 +87,9 @@ Gamma_random = np.ones((S,S))/S
 # Gamma_shirking = np.array([[0.66, 0.34], 
 #           [0.4, 0.6]])
 
-Gamma_e = []
-for e in E:
-    Gamma_e.append(Gamma*e+Gamma_shirking*(1-e))
+# Gamma_e = []
+# for e in E:
+#     Gamma_e.append(Gamma*e+Gamma_shirking*(1-e))
 
 #%%
 """
