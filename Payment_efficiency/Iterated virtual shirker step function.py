@@ -498,7 +498,102 @@ for l in range(T):
                 U_t[i, j, h] += (np.average(P_step_t[agent_e == 1], axis = 0) - c)/T
                 Payments_t[i,j,h] += np.average(P_step_t, axis = 0)/T
     
+#%%
+"""
+Data analysis
+"""
 
+def min_payment(Acc_goal):
+    Payment_min_vs = np.zeros(4)
+    Effort_min_vs = np.zeros(4)
+    Payment_min_vs2 = np.zeros(4)
+    Effort_min_vs2 = np.zeros(4)
+
+    Effort_emp = np.argmax(U_vs, axis = 0)
+    for k in range(4):
+        if np.count_nonzero(Acc_vs[:,k] >= Acc_goal) == 0:
+            amplitude_range_vs = []
+        else:
+            index_acc = next(x for x in Acc_vs[:,k] if x >= Acc_goal)
+            min_effort_vs = np.where(Acc_vs[:,k] == index_acc)[0][0]
+            amplitude_range_vs = np.where(Effort_emp[:,k] >= min_effort_vs)[0]
+        pay_min_k = np.inf
+        eff_min_k = -1
+        for h in amplitude_range_vs:
+            if Payments_vs[Effort_emp[h,k],h,k] < pay_min_k:
+                pay_min_k = Payments_vs[Effort_emp[h,k],h,k]
+                eff_min_k = Effort[Effort_emp[h,k]]
+        Payment_min_vs[k] = pay_min_k
+        Effort_min_vs[k] = eff_min_k
+    
+    Effort_emp = np.argmax(U_vs2, axis = 0)
+    for k in range(4):
+        if np.count_nonzero(Acc_vs2[:,k] >= Acc_goal) == 0:
+            amplitude_range_vs = []
+        else:
+            index_acc = next(x for x in Acc_vs2[:,k] if x >= Acc_goal)
+            min_effort_vs = np.where(Acc_vs2[:,k] == index_acc)[0][0]
+            amplitude_range_vs = np.where(Effort_emp[:,k] >= min_effort_vs)[0]
+        pay_min_k = np.inf
+        eff_min_k = -1
+        for h in amplitude_range_vs:
+            if Payments_vs2[Effort_emp[h,k],h,k] < pay_min_k:
+                pay_min_k = Payments_vs2[Effort_emp[h,k],h,k]
+                eff_min_k = Effort[Effort_emp[h,k]]
+        Payment_min_vs2[k] = pay_min_k
+        Effort_min_vs2[k] = eff_min_k
+
+    Payment_min_opt = np.zeros(4)
+    Effort_min_opt = np.zeros(4)
+    
+    Effort_opt = np.argmax(U_t, axis = 0)
+    for k in range(4):
+        pay_min_k = np.inf
+        eff_min_k = -1
+        for j,t in enumerate(Thresholds):
+            if np.count_nonzero(Acc_t[:,j,k] >= Acc_goal) == 0:
+                amplitude_range_t = []
+            else:
+                index_acc = next(x for x in Acc_t[:,j,k] if x >= Acc_goal)
+                min_effort_t = np.where(Acc_t[:,j,k] == index_acc)[0][0]
+                amplitude_range_t = np.where(Effort_opt[j,:,k] >= min_effort_t)[0]
+          
+            for h in amplitude_range_t:
+                if Payments_t[Effort_opt[j,h,k],j,h,k] < pay_min_k:
+                    pay_min_k = Payments_t[Effort_opt[j,h,k],j,h,k]
+                    eff_min_k = Effort[Effort_opt[j,h,k]]
+        Payment_min_opt[k] = pay_min_k
+        Effort_min_opt[k] = eff_min_k
+    return Payment_min_vs, Payment_min_vs2, Payment_min_opt
+
+# Payment_min_vs, Payment_min_vs2, Payment_min_opt = min_payment(0.95)
+# print('Matrix-World_1-mi_30-n_50-m_100-acc_95','\n')
+# print('Virtual shirker min_payment: ', '\n', Payment_min_vs)
+# print('Iterated virtual shirker min_payment: ', '\n', Payment_min_vs2)
+# print('Optimal min_payment: ', '\n', Payment_min_opt)
+# print('Virtual shirker elicited efforts: ','\n', Effort_min_vs)
+# print('Iterated virtual shirker elicited efforts: ','\n', Effort_min_vs2)
+# print('Optimal elicited efforts: ', '\n', Effort_min_opt)
+
+Acc_goal = np.arange(0.9, 0.995, 0.005)
+Paymin = np.zeros((4, len(Acc_goal), 3))
+for i, acc in enumerate(Acc_goal):
+    Payment_min_vs, Payment_min_vs2, Payment_min_opt = min_payment(acc)
+    for k in range(4):
+        Paymin[k, i, 0] = Payment_min_vs[k]
+        Paymin[k, i, 1] = Payment_min_vs2[k]
+        Paymin[k, i, 2] = Payment_min_opt[k]
+    
+MI = ['TVD', 'KL', 'SQ', 'HLG']
+for k in range(4):
+    plt.figure()
+    plt.plot(Acc_goal, Paymin[k,:,0], label = 'VS')
+    plt.plot(Acc_goal, Paymin[k,:,1], label = 'Iterated-VS')
+    plt.plot(Acc_goal, Paymin[k,:,2], label = 'Opt')
+    plt.xlabel('Goal accuracy')
+    plt.ylabel('Minimum payment')
+    plt.title('Matrix-World_1-mi_30-n_50-m_100-acc_95, '+MI[k])
+    plt.legend()
 
 
 
