@@ -484,7 +484,7 @@ for l in range(T):
             P_step_vs = np.zeros((n,4)) + 0.1
             P_step_vs[agent_w == 1] = a
             U_vs2[i, h] += (np.average(P_step_vs[agent_e == 1], axis = 0) - c)/T
-            Payments_vs[i,h] += np.average(P_step_vs, axis = 0)/T
+            Payments_vs2[i,h] += np.average(P_step_vs, axis = 0)/T
         
         for j, t in enumerate(Thresholds):
             t_prime = (1-t)*np.min(P_once, axis = 0) + t*np.max(P_once, axis = 0)
