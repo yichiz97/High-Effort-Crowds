@@ -490,7 +490,7 @@ for l in range(T):
             P_step_vs = np.zeros((n,5)) + 0.1
             P_step_vs[agent_w == 1] = a
             U_vs2[i, h] += (np.average(P_step_vs[agent_e == 1], axis = 0) - c)/T
-            Payments_vs[i,h] += np.average(P_step_vs, axis = 0)/T
+            Payments_vs2[i,h] += np.average(P_step_vs, axis = 0)/T
         
         argsort_agent = P_once.argsort(axis = 0)
         for j, t in enumerate(Thresholds):
@@ -592,7 +592,7 @@ for i, acc in enumerate(Acc_goal):
         Paymin[k, i, 2] = Payment_min_opt[k]
     
 MI = ['TVD', 'KL', 'SQ', 'HLG', 'DMI']
-for k in range(4):
+for k in range(5):
     plt.figure()
     plt.plot(Acc_goal, Paymin[k,:,0], label = 'VS')
     plt.plot(Acc_goal, Paymin[k,:,1], label = 'Iterated-VS')
@@ -602,6 +602,24 @@ for k in range(4):
     plt.title('Matrix-World_1-mi_30-n_50-m_100-ct_3, '+MI[k])
     plt.legend()
 
+#%%
+Acc_goal = np.arange(0.9, 0.995, 0.005)
+Paymin = np.zeros((4, len(Acc_goal), 3))
+for i, acc in enumerate(Acc_goal):
+    Payment_min_vs, Payment_min_vs2, Payment_min_opt = min_payment(acc)
+    for k in range(4):
+        Paymin[k, i, 0] = Payment_min_vs[k]
+        Paymin[k, i, 1] = Payment_min_vs2[k]
+        Paymin[k, i, 2] = Payment_min_opt[k]
+    
+MI = ['TVD', 'KL', 'SQ', 'HLG']
+plt.figure()
+for k in range(4):
+    plt.plot(Acc_goal, Paymin[k,:,1], label = MI[k])
+    plt.xlabel('Goal accuracy')
+    plt.ylabel('Minimum payment')
+    plt.title('Pairing-World_1-mi_30-n_50-m_100-ct_3, Iterated vs')
+    plt.legend()
 
 
 #%%
