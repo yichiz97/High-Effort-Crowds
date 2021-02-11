@@ -417,24 +417,25 @@ def accuracy_computer_threshold(R, Y, agent_w):
 #%%
 """
 Experiment: comparing optimal step, virtual shirker step, and iterated virtual shirker step
+For matrix and determinant
 """
 n = 50
 m = 100
-mi = 30
+mi = 80
 Effort = np.arange(0, 1.01, 0.01)
-Thresholds = np.arange(0.2, 1, 0.01)
+Thresholds = np.arange(1,n,1)
 Amplitudes = np.arange(0.5, 3.01, 0.02)
 T = 80
 alpha = 5
-U_vs = np.zeros((len(Effort), len(Amplitudes), 4))
-U_vs2 = np.zeros((len(Effort), len(Amplitudes), 4))
-U_t = np.zeros((len(Effort), len(Thresholds), len(Amplitudes), 4))
-Payments_vs = np.zeros((len(Effort), len(Amplitudes), 4))
-Payments_vs2 = np.zeros((len(Effort), len(Amplitudes), 4))
-Payments_t = np.zeros((len(Effort), len(Thresholds), len(Amplitudes), 4))
-Acc_vs = np.zeros((len(Effort), 4))
-Acc_vs2 = np.zeros((len(Effort), 4))
-Acc_t = np.zeros((len(Effort), len(Thresholds), 4))
+U_vs = np.zeros((len(Effort), len(Amplitudes), 5))
+U_vs2 = np.zeros((len(Effort), len(Amplitudes), 5))
+U_t = np.zeros((len(Effort), len(Thresholds), len(Amplitudes), 5))
+Payments_vs = np.zeros((len(Effort), len(Amplitudes), 5))
+Payments_vs2 = np.zeros((len(Effort), len(Amplitudes), 5))
+Payments_t = np.zeros((len(Effort), len(Thresholds), len(Amplitudes), 5))
+Acc_vs = np.zeros((len(Effort), 5))
+Acc_vs2 = np.zeros((len(Effort), 5))
+Acc_t = np.zeros((len(Effort), len(Thresholds), 5))
 
 for l in range(T):
     print('round ',l)
@@ -445,23 +446,28 @@ for l in range(T):
             if np.count_nonzero(np.count_nonzero(np.array(R), axis = 0)) == m:
                 break
         R = np.array(R)
-        agent_w = np.ones((n,4))
-        agent_w_once = np.ones((n,4))
-        P_once = np.zeros((n,4))
+        agent_w = np.ones((n,5))
+        agent_w_once = np.ones((n,5))
+        P_once = np.zeros((n,5))
         count = 0
         while True:
             agent_w_new = agent_w.copy()
-            for k in range(4):
+            for k in range(5):
+                
                 n_w = np.count_nonzero(agent_w[:,k])
                 n_s = int(n_w/5) + 1
                 R_s, _, _ = Report_Generator_Uniform(n_s, mi, m, [1], signal, w, [Gamma_random])
                 R_w = R[np.where(agent_w[:,k] == 1)[0]]
-                P_all = mechanism_matrix_fast(np.vstack((R_w, R_s)), k)
+                if k < 4:
+                    P_all = mechanism_matrix_fast(np.vstack((R_w, R_s)), k)
+                else:
+                    P_all = mechanism_determinant_fast(np.vstack((R_w, R_s)))
                 P = P_all[0:n_w]
                 if n_w == n:
                     P_once[:,k] = P
                 t_vs = np.max(P_all[n_w:n_w+n_s])
                 agent_w_new[np.where(agent_w[:,k] == 1)[0][np.where(P <= t_vs)[0]], k] = 0
+            
             if n_w == n:
                 agent_w_once = agent_w_new.copy()
             # print(np.count_nonzero(agent_w, axis = 0))
@@ -473,28 +479,29 @@ for l in range(T):
         
         
         c = cost(e, alpha)
-        for k in range(4):
+        for k in range(5):
             Acc_vs[i,k] += accuracy_computer_threshold(R, Y, agent_w_once[:,k])/T
             Acc_vs2[i,k] += accuracy_computer_threshold(R, Y, agent_w[:,k])/T
         for h, a in enumerate(Amplitudes):
-            P_step_vs = np.zeros((n,4)) + 0.1
+            P_step_vs = np.zeros((n,5)) + 0.1
             P_step_vs[agent_w_once == 1] = a
             U_vs[i, h] += (np.average(P_step_vs[agent_e == 1], axis = 0) - c)/T
             Payments_vs[i,h] += np.average(P_step_vs, axis = 0)/T
-            P_step_vs = np.zeros((n,4)) + 0.1
+            P_step_vs = np.zeros((n,5)) + 0.1
             P_step_vs[agent_w == 1] = a
             U_vs2[i, h] += (np.average(P_step_vs[agent_e == 1], axis = 0) - c)/T
-            Payments_vs2[i,h] += np.average(P_step_vs, axis = 0)/T
+            Payments_vs[i,h] += np.average(P_step_vs, axis = 0)/T
         
+        argsort_agent = P_once.argsort(axis = 0)
         for j, t in enumerate(Thresholds):
             t_prime = (1-t)*np.min(P_once, axis = 0) + t*np.max(P_once, axis = 0)
-            for k in range(4):
+            for k in range(5):
                 agent_w_t = np.zeros(n)
-                agent_w_t[P_once[:,k]>t_prime[k]] = 1
+                agent_w_t[argsort_agent[-t:,k]] = 1
                 Acc_t[i,j,k] += accuracy_computer_threshold(R, Y, agent_w_t)/T
             for h, a in enumerate(Amplitudes):
-                P_step_t = np.zeros((n,4)) + 0.1
-                P_step_t[P_once>t_prime] = a
+                P_step_t = np.zeros((n,5)) + 0.1
+                P_step_t[argsort_agent[-t:,k]] = a
                 U_t[i, j, h] += (np.average(P_step_t[agent_e == 1], axis = 0) - c)/T
                 Payments_t[i,j,h] += np.average(P_step_t, axis = 0)/T
     
@@ -504,13 +511,13 @@ Data analysis
 """
 
 def min_payment(Acc_goal):
-    Payment_min_vs = np.zeros(4)
-    Effort_min_vs = np.zeros(4)
-    Payment_min_vs2 = np.zeros(4)
-    Effort_min_vs2 = np.zeros(4)
+    Payment_min_vs = np.zeros(5)
+    Effort_min_vs = np.zeros(5)
+    Payment_min_vs2 = np.zeros(5)
+    Effort_min_vs2 = np.zeros(5)
 
     Effort_emp = np.argmax(U_vs, axis = 0)
-    for k in range(4):
+    for k in range(5):
         if np.count_nonzero(Acc_vs[:,k] >= Acc_goal) == 0:
             amplitude_range_vs = []
         else:
@@ -527,7 +534,7 @@ def min_payment(Acc_goal):
         Effort_min_vs[k] = eff_min_k
     
     Effort_emp = np.argmax(U_vs2, axis = 0)
-    for k in range(4):
+    for k in range(5):
         if np.count_nonzero(Acc_vs2[:,k] >= Acc_goal) == 0:
             amplitude_range_vs = []
         else:
@@ -543,11 +550,11 @@ def min_payment(Acc_goal):
         Payment_min_vs2[k] = pay_min_k
         Effort_min_vs2[k] = eff_min_k
 
-    Payment_min_opt = np.zeros(4)
-    Effort_min_opt = np.zeros(4)
+    Payment_min_opt = np.zeros(5)
+    Effort_min_opt = np.zeros(5)
     
     Effort_opt = np.argmax(U_t, axis = 0)
-    for k in range(4):
+    for k in range(5):
         pay_min_k = np.inf
         eff_min_k = -1
         for j,t in enumerate(Thresholds):
@@ -576,15 +583,15 @@ def min_payment(Acc_goal):
 # print('Optimal elicited efforts: ', '\n', Effort_min_opt)
 
 Acc_goal = np.arange(0.9, 0.995, 0.005)
-Paymin = np.zeros((4, len(Acc_goal), 3))
+Paymin = np.zeros((5, len(Acc_goal), 3))
 for i, acc in enumerate(Acc_goal):
     Payment_min_vs, Payment_min_vs2, Payment_min_opt = min_payment(acc)
-    for k in range(4):
+    for k in range(5):
         Paymin[k, i, 0] = Payment_min_vs[k]
         Paymin[k, i, 1] = Payment_min_vs2[k]
         Paymin[k, i, 2] = Payment_min_opt[k]
     
-MI = ['TVD', 'KL', 'SQ', 'HLG']
+MI = ['TVD', 'KL', 'SQ', 'HLG', 'DMI']
 for k in range(4):
     plt.figure()
     plt.plot(Acc_goal, Paymin[k,:,0], label = 'VS')
@@ -592,8 +599,37 @@ for k in range(4):
     plt.plot(Acc_goal, Paymin[k,:,2], label = 'Opt')
     plt.xlabel('Goal accuracy')
     plt.ylabel('Minimum payment')
-    plt.title('Matrix-World_1-mi_30-n_50-m_100-acc_95, '+MI[k])
+    plt.title('Matrix-World_1-mi_30-n_50-m_100-ct_3, '+MI[k])
     plt.legend()
+
+
+
+#%%
+n = 50
+n_s = 10
+e = 0.8
+Gamma_e = e*Gamma + (1-e)*Gamma_shirking
+R, Y, agent_e = Report_Generator_Uniform(n, mi, m, prior_e, signal, w, [Gamma_shirking, Gamma_e])
+R_s, _, _ = Report_Generator_Uniform(n_s, mi, m, [1], signal, w, [Gamma_random])
+P_all = mechanism_determinant_fast(np.vstack((R, R_s)))
+P = P_all[0:n_w]
+t_vs = np.max(P_all[n:n+n_s])
+
+plt.figure()
+plt.scatter(P_all[0:n][agent_e == 0], np.random.uniform(0,1,len(P_all[0:n][agent_e == 0])), color = 'red')
+plt.scatter(P_all[0:n][agent_e == 1], np.random.uniform(0,1,len(P_all[0:n][agent_e == 1])), color = 'green')
+plt.axvline(x = t_vs)
+plt.title('Determinant')
+
+P_all = mechanism_matrix_fast(np.vstack((R, R_s)), 3)
+P = P_all[0:n_w]
+t_vs = np.max(P_all[n:n+n_s])
+
+plt.figure()
+plt.scatter(P_all[0:n][agent_e == 0], np.random.uniform(0,1,len(P_all[0:n][agent_e == 0])), color = 'red')
+plt.scatter(P_all[0:n][agent_e == 1], np.random.uniform(0,1,len(P_all[0:n][agent_e == 1])), color = 'green')
+plt.axvline(x = t_vs)
+plt.title('Matrix')
 
 
 
