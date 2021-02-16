@@ -19,35 +19,36 @@ World model
 prior_e = [0.2, 0.8]
 
 # World 1: signal space 5, clear gap between shirker and worker
-signal = [1, 2, 3, 4, 5]
-S = len(signal)
-w = np.array([0.2, 0.25, 0.25, 0.15, 0.15])
-Gamma = np.array([[0.8, 0.1, 0.04, 0.04, 0.02], 
-          [0.1, 0.8, 0.08, 0, 0.02],
-          [0.01, 0.08, 0.82, 0.06, 0.03],
-          [0, 0, 0.08, 0.85, 0.07],
-          [0, 0.01, 0.01, 0.08, 0.9]])
-Gamma_shirking = np.array([[0.26, 0.34, 0.26, 0.08, 0.06], 
-                            [0.24, 0.3, 0.3, 0.11, 0.05],
-                            [0.1, 0.28, 0.24, 0.26, 0.12],
-                            [0.06, 0.13, 0.28, 0.3, 0.23],
-                            [0.12, 0.08, 0.22, 0.3, 0.28]])
-Gamma_random = np.ones((S,S))/S
-
-# # World 2: signal space 5, unclear gap between shirker and worker
 # signal = [1, 2, 3, 4, 5]
 # S = len(signal)
-# w = np.array([0.1, 0.1, 0.4, 0.2, 0.2])
-# Gamma = np.array([[0.62, 0.22, 0.1, 0.04, 0.02], 
-#           [0.14, 0.63, 0.12, 0.09, 0.02],
-#           [0.05, 0.16, 0.58, 0.14, 0.07],
-#           [0.02, 0.06, 0.15, 0.61, 0.16],
-#           [0.02, 0.05, 0.11, 0.18, 0.64]])
-# Gamma_shirking = np.array([[0.34, 0.26, 0.26, 0.08, 0.06], 
-#                             [0.24, 0.33, 0.27, 0.11, 0.05],
-#                             [0.1, 0.24, 0.28, 0.26, 0.12],
+# w = np.array([0.2, 0.25, 0.25, 0.15, 0.15])
+# Gamma = np.array([[0.8, 0.1, 0.04, 0.04, 0.02], 
+#           [0.1, 0.8, 0.08, 0, 0.02],
+#           [0.01, 0.08, 0.82, 0.06, 0.03],
+#           [0, 0, 0.08, 0.85, 0.07],
+#           [0, 0.01, 0.01, 0.08, 0.9]])
+# Gamma_shirking = np.array([[0.26, 0.34, 0.26, 0.08, 0.06], 
+#                             [0.24, 0.3, 0.3, 0.11, 0.05],
+#                             [0.1, 0.28, 0.24, 0.26, 0.12],
 #                             [0.06, 0.13, 0.28, 0.3, 0.23],
-#                             [0.1, 0.07, 0.21, 0.29, 0.33]])
+#                             [0.12, 0.08, 0.22, 0.3, 0.28]])
+# Gamma_random = np.ones((S,S))/S
+
+# # World 2: signal space 5, unclear gap between shirker and worker
+signal = [1, 2, 3, 4, 5]
+S = len(signal)
+w = np.array([0.1, 0.1, 0.4, 0.2, 0.2])
+Gamma = np.array([[0.62, 0.22, 0.1, 0.04, 0.02], 
+          [0.28, 0.63, 0.09, 0.01, 0.01],
+          [0.05, 0.16, 0.58, 0.14, 0.07],
+          [0.02, 0.06, 0.15, 0.61, 0.16],
+          [0.01, 0.06, 0.02, 0.27, 0.64]])
+Gamma_shirking = np.array([[0.34, 0.26, 0.26, 0.08, 0.06], 
+                            [0.24, 0.33, 0.27, 0.11, 0.05],
+                            [0.1, 0.24, 0.28, 0.26, 0.12],
+                            [0.06, 0.13, 0.28, 0.3, 0.23],
+                            [0.1, 0.07, 0.21, 0.29, 0.33]])
+Gamma_random = np.ones((S,S))/S
 
 # World 3: signal space 3,  clear gap between shirker and worker
 # signal = [1, 2, 3]
@@ -419,7 +420,7 @@ def accuracy_computer_threshold(R, Y, agent_w):
 Experiment: comparing optimal step, virtual shirker step, and iterated virtual shirker step
 For matrix and determinant
 """
-n = 50
+n = 30
 m = 100
 mi = 80
 Effort = np.arange(0, 1.01, 0.01)
@@ -438,7 +439,8 @@ Acc_vs2 = np.zeros((len(Effort), 5))
 Acc_t = np.zeros((len(Effort), len(Thresholds), 5))
 
 for l in range(T):
-    print('round ',l)
+    if l%1 == 0:
+        print('round ',l)
     for i, e in enumerate(Effort):
         Gamma_e = e*Gamma + (1-e)*Gamma_shirking
         while True:
@@ -471,7 +473,7 @@ for l in range(T):
             if n_w == n:
                 agent_w_once = agent_w_new.copy()
             # print(np.count_nonzero(agent_w, axis = 0))
-            if np.array_equal(agent_w_new, agent_w) or count == 3:
+            if np.array_equal(agent_w_new, agent_w) or count == 100:
                 break
             else:
                 count += 1
@@ -505,9 +507,13 @@ for l in range(T):
                 U_t[i, j, h] += (np.average(P_step_t[agent_e == 1], axis = 0) - c)/T
                 Payments_t[i,j,h] += np.average(P_step_t, axis = 0)/T
     
+    
+    
+
 #%%
 """
 Data analysis
+Fix mechanism, compare step functions
 """
 
 def min_payment(Acc_goal):
@@ -571,7 +577,7 @@ def min_payment(Acc_goal):
                     eff_min_k = Effort[Effort_opt[j,h,k]]
         Payment_min_opt[k] = pay_min_k
         Effort_min_opt[k] = eff_min_k
-    return Payment_min_vs, Payment_min_vs2, Payment_min_opt
+    return Payment_min_vs, Payment_min_vs2, Payment_min_opt, Effort_min_vs, Effort_min_vs2, Effort_min_opt
 
 # Payment_min_vs, Payment_min_vs2, Payment_min_opt = min_payment(0.95)
 # print('Matrix-World_1-mi_30-n_50-m_100-acc_95','\n')
@@ -582,16 +588,16 @@ def min_payment(Acc_goal):
 # print('Iterated virtual shirker elicited efforts: ','\n', Effort_min_vs2)
 # print('Optimal elicited efforts: ', '\n', Effort_min_opt)
 
-Acc_goal = np.arange(0.9, 0.995, 0.005)
+Acc_goal = np.arange(0.8, 0.995, 0.005)
 Paymin = np.zeros((5, len(Acc_goal), 3))
 for i, acc in enumerate(Acc_goal):
-    Payment_min_vs, Payment_min_vs2, Payment_min_opt = min_payment(acc)
+    Payment_min_vs, Payment_min_vs2, Payment_min_opt, _, _, _ = min_payment(acc)
     for k in range(5):
         Paymin[k, i, 0] = Payment_min_vs[k]
         Paymin[k, i, 1] = Payment_min_vs2[k]
         Paymin[k, i, 2] = Payment_min_opt[k]
     
-MI = ['TVD', 'KL', 'SQ', 'HLG', 'DMI']
+MI = ['Matrix-TVD', 'Matrix-KL', 'Matrix-SQ', 'Matrix-HLG', 'DMI']
 for k in range(5):
     plt.figure()
     plt.plot(Acc_goal, Paymin[k,:,0], label = 'VS')
@@ -599,38 +605,44 @@ for k in range(5):
     plt.plot(Acc_goal, Paymin[k,:,2], label = 'Opt')
     plt.xlabel('Goal accuracy')
     plt.ylabel('Minimum payment')
-    plt.title('Matrix-World_1-mi_30-n_50-m_100-ct_3, '+MI[k])
+    plt.title('World_1-mi_80-n_30-m_100-ct_100, '+ MI[k])
     plt.legend()
 
 #%%
-Acc_goal = np.arange(0.9, 0.995, 0.005)
-Paymin = np.zeros((4, len(Acc_goal), 3))
+"""
+Fix step function, compare mechanisms
+"""
+Acc_goal = np.arange(0.8, 0.995, 0.005)
+Paymin = np.zeros((5, len(Acc_goal), 3))
 for i, acc in enumerate(Acc_goal):
-    Payment_min_vs, Payment_min_vs2, Payment_min_opt = min_payment(acc)
-    for k in range(4):
+    Payment_min_vs, Payment_min_vs2, Payment_min_opt, _, _, _  = min_payment(acc)
+    for k in range(5):
         Paymin[k, i, 0] = Payment_min_vs[k]
         Paymin[k, i, 1] = Payment_min_vs2[k]
         Paymin[k, i, 2] = Payment_min_opt[k]
     
-MI = ['TVD', 'KL', 'SQ', 'HLG']
+MI = ['TVD', 'KL', 'SQ', 'HLG', 'DMI']
 plt.figure()
-for k in range(4):
+for k in range(5):
     plt.plot(Acc_goal, Paymin[k,:,1], label = MI[k])
     plt.xlabel('Goal accuracy')
     plt.ylabel('Minimum payment')
-    plt.title('Pairing-World_1-mi_30-n_50-m_100-ct_3, Iterated vs')
+    plt.title('Matrix&Determinant-World_1-mi_80-n_50-m_100-ct_100, Iterated vs')
     plt.legend()
 
-
 #%%
+"""
+Plot agents mutual information scores and vs threshold
+"""
+
 n = 50
 n_s = 10
-e = 0.8
+e = 0.6
 Gamma_e = e*Gamma + (1-e)*Gamma_shirking
 R, Y, agent_e = Report_Generator_Uniform(n, mi, m, prior_e, signal, w, [Gamma_shirking, Gamma_e])
 R_s, _, _ = Report_Generator_Uniform(n_s, mi, m, [1], signal, w, [Gamma_random])
 P_all = mechanism_determinant_fast(np.vstack((R, R_s)))
-P = P_all[0:n_w]
+P = P_all[0:n]
 t_vs = np.max(P_all[n:n+n_s])
 
 plt.figure()
@@ -639,15 +651,39 @@ plt.scatter(P_all[0:n][agent_e == 1], np.random.uniform(0,1,len(P_all[0:n][agent
 plt.axvline(x = t_vs)
 plt.title('Determinant')
 
-P_all = mechanism_matrix_fast(np.vstack((R, R_s)), 3)
-P = P_all[0:n_w]
-t_vs = np.max(P_all[n:n+n_s])
+# P_all = mechanism_matrix_fast(np.vstack((R, R_s)), 3)
+# P = P_all[0:n_w]
+# t_vs = np.max(P_all[n:n+n_s])
 
-plt.figure()
-plt.scatter(P_all[0:n][agent_e == 0], np.random.uniform(0,1,len(P_all[0:n][agent_e == 0])), color = 'red')
-plt.scatter(P_all[0:n][agent_e == 1], np.random.uniform(0,1,len(P_all[0:n][agent_e == 1])), color = 'green')
-plt.axvline(x = t_vs)
-plt.title('Matrix')
+# plt.figure()
+# plt.scatter(P_all[0:n][agent_e == 0], np.random.uniform(0,1,len(P_all[0:n][agent_e == 0])), color = 'red')
+# plt.scatter(P_all[0:n][agent_e == 1], np.random.uniform(0,1,len(P_all[0:n][agent_e == 1])), color = 'green')
+# plt.axvline(x = t_vs)
+# plt.title('Matrix')
+#%%
+k = 4
+Effort_emp = np.argmax(U_vs2, axis = 0)
+index_acc = next(x for x in Acc_vs2[:,k] if x >= 0.98)
+min_effort_vs = np.where(Acc_vs2[:,k] == index_acc)[0][0]
+print(min_effort_vs)
+amplitude_range_vs = np.where(Effort_emp[:,k] >= min_effort_vs)[0]
+print(np.argmax(U_vs, axis = 0)[:,k])
+
+
+#%%
+Payment_min_vs, Payment_min_vs2, Payment_min_opt, Effort_min_vs, Effort_min_vs2, Effort_min_opt = min_payment(0.98)
+print(Effort_min_vs, Effort_min_vs2, Effort_min_opt)
+print(Payment_min_vs, Payment_min_vs2, Payment_min_opt)
+
+
+
+
+
+#%%
+print(U_vs2[77,3:8,4])
+
+
+
 
 
 
