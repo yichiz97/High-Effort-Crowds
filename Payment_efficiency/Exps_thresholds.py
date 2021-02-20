@@ -8,6 +8,7 @@ Created on Thu Feb 18 12:06:40 2021
 from Model_And_Mechanisms import mechanism_matrix_fast, mechanism_determinant_fast, mechanism_pairing, Report_Generator, Crowdsourcing
 import numpy as np
 import math
+import matplotlib.pyplot as plt
 
 w = np.array([0.1, 0.1, 0.4, 0.2, 0.2])
 Gamma = np.array([[0.62, 0.22, 0.1, 0.04, 0.02], 
@@ -152,7 +153,125 @@ for no_n0, n0 in enumerate(N0):
                     U_t[no_n0,i, j, h] += (np.average(P_step_t[agent_e == 1], axis = 0) - c)/T
                     Payments_t[no_n0,i,j,h] += np.average(P_step_t, axis = 0)/T
                     
-                    
+
+#%%
+"""
+Data analysis
+"""
+def min_payment(Acc_goal, no_n0):
+    Payment_min_vs = np.zeros(5)
+    Effort_min_vs = np.zeros(5)
+    Payment_min_vs2 = np.zeros(5)
+    Effort_min_vs2 = np.zeros(5)
+
+    Effort_emp = np.argmax(U_vs[no_n0], axis = 0)
+    for k in range(5):
+        if np.count_nonzero(Acc_vs[no_n0,:,k] >= Acc_goal) == 0:
+            amplitude_range_vs = []
+        else:
+            index_acc = next(x for x in Acc_vs[no_n0,:,k] if x >= Acc_goal)
+            min_effort_vs = np.where(Acc_vs[no_n0,:,k] == index_acc)[0][0]
+            amplitude_range_vs = np.where(Effort_emp[:,k] >= min_effort_vs)[0]
+        pay_min_k = np.inf
+        eff_min_k = -np.inf
+        for h in amplitude_range_vs:
+            if Payments_vs[no_n0,Effort_emp[h,k],h,k] < pay_min_k:
+                pay_min_k = Payments_vs[no_n0,Effort_emp[h,k],h,k]
+                eff_min_k = Effort[Effort_emp[h,k]]
+        Payment_min_vs[k] = pay_min_k
+        Effort_min_vs[k] = eff_min_k
+    
+    Effort_emp = np.argmax(U_vs2[no_n0], axis = 0)
+    for k in range(5):
+        if np.count_nonzero(Acc_vs2[no_n0,:,k] >= Acc_goal) == 0:
+            amplitude_range_vs = []
+        else:
+            index_acc = next(x for x in Acc_vs2[no_n0,:,k] if x >= Acc_goal)
+            min_effort_vs = np.where(Acc_vs2[no_n0,:,k] == index_acc)[0][0]
+            amplitude_range_vs = np.where(Effort_emp[:,k] >= min_effort_vs)[0]
+        pay_min_k = np.inf
+        eff_min_k = -np.inf
+        for h in amplitude_range_vs:
+            if Payments_vs2[no_n0,Effort_emp[h,k],h,k] < pay_min_k:
+                pay_min_k = Payments_vs2[no_n0,Effort_emp[h,k],h,k]
+                eff_min_k = Effort[Effort_emp[h,k]]
+        Payment_min_vs2[k] = pay_min_k
+        Effort_min_vs2[k] = eff_min_k
+
+    Payment_min_opt = np.zeros(5)
+    Effort_min_opt = np.zeros(5)
+    
+    Effort_opt = np.argmax(U_t[no_n0], axis = 0)
+    for k in range(5):
+        pay_min_k = np.inf
+        eff_min_k = -np.inf
+        for j,t in enumerate(Thresholds):
+            if np.count_nonzero(Acc_t[no_n0,:,j,k] >= Acc_goal) == 0:
+                amplitude_range_t = []
+            else:
+                index_acc = next(x for x in Acc_t[no_n0,:,j,k] if x >= Acc_goal)
+                min_effort_t = np.where(Acc_t[no_n0,:,j,k] == index_acc)[0][0]
+                amplitude_range_t = np.where(Effort_opt[j,:,k] >= min_effort_t)[0]
+          
+            for h in amplitude_range_t:
+                if Payments_t[no_n0,Effort_opt[j,h,k],j,h,k] < pay_min_k:
+                    pay_min_k = Payments_t[no_n0,Effort_opt[j,h,k],j,h,k]
+                    eff_min_k = Effort[Effort_opt[j,h,k]]
+        Payment_min_opt[k] = pay_min_k
+        Effort_min_opt[k] = eff_min_k
+    return Payment_min_vs, Payment_min_vs2, Payment_min_opt, Effort_min_vs, Effort_min_vs2, Effort_min_opt
+
+acc = 0.99
+MI = ['Matrix-TVD', 'Matrix-KL', 'Matrix-SQ', 'Matrix-HLG', 'DMI']
+minpay_vs2 = np.zeros((len(N0), 5))
+mineffort_vs2 = np.zeros((len(N0), 5))
+for no_n0 in range(len(N0)):
+    Payment_min_vs, Payment_min_vs2, Payment_min_opt, Effort_min_vs, Effort_min_vs2, Effort_min_opt = min_payment(acc, no_n0)
+    minpay_vs2[no_n0] = Payment_min_vs2*math.ceil(m*N0[no_n0]/(mi - 1))
+    mineffort_vs2[no_n0] = Effort_min_vs2
+
+plt.figure()
+for k in range(5):
+    plt.plot(N0, minpay_vs2[:,k], label = MI[k])
+plt.xlabel('Number of agents assigned to each task')
+plt.ylabel('Minpayment')
+plt.title('Iterated vs, World 1, Matrix and DMI, mi = '+str(mi)+', Acc = '+str(acc))
+plt.legend()
+    
+plt.figure()
+for k in range(5):
+    plt.plot(N0, mineffort_vs2[:,k], label = MI[k])
+plt.xlabel('Number of agents assigned to each task')
+plt.ylabel('Elicited effort')
+plt.title('Iterated vs, World 1, Matrix and DMI, mi = '+str(mi)+', Acc = '+str(acc))
+plt.legend()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
                     
                     
                     
