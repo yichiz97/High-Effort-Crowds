@@ -91,8 +91,8 @@ for no_n0, n0 in enumerate(N0):
         if l%10 == 0:
             print('n0 ',n0,' ; round ',l)
         for i, e in enumerate(Effort):
-            para_w = Crowdsourcing(w = w, Gamma_w = Gamma_w, Gamma_s = Gamma_s, e = e, n0 = n0)
-            para_s = Crowdsourcing(w = w, Gamma_w = Gamma_w, Gamma_s = Gamma_random, prior_e = [1,0,0], n0 = int(n0/5))
+            para_w = Crowdsourcing(w = w, Gamma_w = Gamma_w, Gamma_s = Gamma_s, e = e, mi = mi, n0 = n0)
+            para_s = Crowdsourcing(w = w, Gamma_w = Gamma_w, Gamma_s = Gamma_random, prior_e = [1,0,0], mi = mi, n0 = int(n0/5))
             R, Y, agent_e = Report_Generator(para_w)
             agent_w = np.ones((n,5))
             agent_w_once = np.ones((n,5))
